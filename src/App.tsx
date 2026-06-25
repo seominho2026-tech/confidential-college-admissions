@@ -402,69 +402,69 @@ function getSushiData() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-3 xs:p-4 sm:p-6 relative overflow-hidden select-none">
         {/* Advanced Ambient Glow Lights */}
-        <div className="absolute top-1/10 left-1/10 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-        <div className="absolute bottom-1/10 right-1/10 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute top-1/10 left-1/10 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-600/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-1/10 right-1/10 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-emerald-600/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-blue-500/5 rounded-full blur-[60px] sm:blur-[80px] pointer-events-none"></div>
 
-        {/* Elegant Glassmorphic Container */}
-        <div className="w-full max-w-md bg-slate-900/60 border border-slate-800/80 p-6 sm:p-8 rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl relative z-10">
-          <div className="flex flex-col items-center text-center mb-6">
+        {/* Elegant Glassmorphic Container: dynamically expands nicely up to tablet size, compacts nicely on mobile */}
+        <div className="w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[420px] bg-slate-900/60 border border-slate-800/80 p-5 xs:p-6 sm:p-8 rounded-2xl xs:rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl relative z-10">
+          <div className="flex flex-col items-center text-center mb-5 xs:mb-6">
             {/* Security Badge with Flashing Beacon */}
-            <div className="inline-flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black px-3 py-1 rounded-full mb-4 uppercase tracking-wider shadow-inner">
-              <span className="relative flex h-2 w-2">
+            <div className="inline-flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] xs:text-[10px] font-black px-2.5 xs:px-3 py-0.5 xs:py-1 rounded-full mb-3.5 xs:mb-4 uppercase tracking-wider shadow-inner">
+              <span className="relative flex h-1.5 xs:h-2 w-1.5 xs:w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                <span className="relative inline-flex rounded-full h-1.5 xs:h-2 w-1.5 xs:w-2 bg-rose-500"></span>
               </span>
-              <ShieldAlert className="h-3.5 w-3.5" />
+              <ShieldAlert className="h-3 w-3 xs:h-3.5 xs:w-3.5" />
               대외비 (CONFIDENTIAL)
             </div>
 
             {/* Pulsing Lock Icon Halo */}
-            <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/5 animate-shimmer relative overflow-hidden">
+            <div className="w-12 h-12 xs:w-14 xs:h-14 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-3.5 xs:mb-4 shadow-lg shadow-blue-500/5 animate-shimmer relative overflow-hidden">
               <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></div>
-              <Lock className="h-6 w-6" />
+              <Lock className="h-5 w-5 xs:h-6 xs:w-6" />
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-lg xs:text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
               대전 48개 일반고<br />
               <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">수시 입시결과 조회</span>
             </h1>
-            <p className="text-[11px] sm:text-xs text-slate-400 mt-2 font-medium">
+            <p className="text-[10px] xs:text-[11px] sm:text-xs text-slate-400 mt-1.5 xs:mt-2 font-medium">
               본 시스템은 인가된 교육 전문가 전용 비공개 웹앱입니다.
             </p>
           </div>
 
           {/* 10-Minute Timeout Banner */}
           {isAutoLoggedOut && (
-            <div className="mb-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex gap-2.5 items-start text-left animate-fadeIn">
-              <Clock className="h-4.5 w-4.5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="mb-4 xs:mb-5 bg-amber-500/10 border border-amber-500/30 rounded-xl xs:rounded-2xl p-3 flex gap-2 items-start text-left animate-fadeIn">
+              <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <p className="text-[11px] font-bold text-amber-300">세션 보호 자동 잠금</p>
-                <p className="text-[10px] text-amber-400 leading-relaxed">
-                  보안 유지를 위해 <strong>10분 동안 활동이 없어</strong> 세션이 안전하게 종료되었습니다. 비밀번호를 다시 입력해 주세요.
+                <p className="text-[10px] xs:text-[11px] font-bold text-amber-300">세션 보호 자동 잠금</p>
+                <p className="text-[9px] xs:text-[10px] text-amber-400 leading-relaxed">
+                  보안 유지를 위해 <strong>10분 동안 활동이 없어</strong> 세션이 종료되었습니다. 패스코드를 다시 입력해 주세요.
                 </p>
               </div>
             </div>
           )}
 
-          <form onSubmit={(e) => handleLogin(e)} className="space-y-4">
+          <form onSubmit={(e) => handleLogin(e)} className="space-y-3.5 xs:space-y-4">
             <div className="text-center">
-              <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">
+              <label className="block text-[9px] xs:text-[10px] font-bold text-slate-400 mb-1.5 xs:mb-2 uppercase tracking-wider">
                 보안 패스코드 입력
               </label>
 
               {/* Password Visual Dots Matrix */}
-              <div className="flex justify-center gap-3.5 my-4">
+              <div className="flex justify-center gap-3 xs:gap-3.5 my-3 xs:my-4">
                 {[0, 1, 2, 3].map((index) => {
                   const isActive = passwordInput.length > index;
                   return (
                     <div
                       key={index}
-                      className={`w-4 h-4 rounded-full border transition-all duration-300 ${
+                      className={`w-3.5 h-3.5 xs:w-4 xs:h-4 rounded-full border transition-all duration-300 ${
                         isActive
-                          ? 'bg-blue-500 border-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.85)] scale-110'
+                          ? 'bg-blue-500 border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.85)] scale-110'
                           : 'bg-slate-900 border-slate-800'
                       }`}
                     />
@@ -473,7 +473,7 @@ function getSushiData() {
               </div>
 
               {/* Input wrapper with clear centered design */}
-              <div className="relative max-w-[140px] mx-auto">
+              <div className="relative max-w-[120px] xs:max-w-[140px] mx-auto">
                 <input
                   type="password"
                   pattern="[0-9]*"
@@ -492,21 +492,21 @@ function getSushiData() {
                   }}
                   maxLength={4}
                   placeholder="••••"
-                  className="w-full text-center tracking-[0.8em] pl-[0.8em] text-xl font-mono text-white bg-slate-900/60 border border-slate-800/80 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/10 rounded-xl py-2 px-3 transition-all duration-200"
+                  className="w-full text-center tracking-[0.8em] pl-[0.8em] text-lg xs:text-xl font-mono text-white bg-slate-900/60 border border-slate-800/80 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/10 rounded-xl py-1.5 xs:py-2 px-2 xs:px-3 transition-all duration-200"
                   autoFocus
                 />
               </div>
 
               {passwordError && (
-                <p className="text-[11px] text-rose-400 font-bold mt-2.5 flex items-center justify-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <p className="text-[10px] xs:text-[11px] text-rose-400 font-bold mt-2 flex items-center justify-center gap-1">
+                  <AlertCircle className="h-3 w-3 xs:h-3.5 xs:w-3.5 shrink-0" />
                   {passwordError}
                 </p>
               )}
             </div>
 
-            {/* Interactive Touch Keypad */}
-            <div className="grid grid-cols-3 gap-3 max-w-[260px] mx-auto pt-3">
+            {/* Interactive Touch Keypad: fluid button sizing scales perfectly across mobile views up to tablet */}
+            <div className="grid grid-cols-3 gap-2.5 xs:gap-3 sm:gap-3.5 max-w-[210px] xs:max-w-[240px] sm:max-w-[270px] mx-auto pt-2">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'back'].map((key) => {
                 let display: React.ReactNode = key;
                 if (key === 'back') display = '⌫';
@@ -515,7 +515,7 @@ function getSushiData() {
                     key={key}
                     type="button"
                     onClick={() => handleKeypadPress(key)}
-                    className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-black transition-all duration-150 cursor-pointer ${
+                    className={`h-11 w-11 xs:h-12 xs:w-12 sm:h-13 sm:w-13 md:h-14 md:w-14 rounded-full flex items-center justify-center text-xs xs:text-sm sm:text-base font-black transition-all duration-150 cursor-pointer ${
                       key === 'C'
                         ? 'bg-slate-950/50 hover:bg-rose-500/10 text-rose-400 border border-slate-800/60 hover:border-rose-500/30 active:scale-95'
                         : key === 'back'
@@ -531,19 +531,19 @@ function getSushiData() {
 
             <button
               type="submit"
-              className="w-full mt-4 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 text-white font-extrabold text-xs py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full mt-3 xs:mt-4 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 text-white font-extrabold text-xs py-2.5 xs:py-3 px-3 xs:px-4 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <ShieldCheck className="h-4 w-4" />
+              <ShieldCheck className="h-3.5 w-3.5 xs:h-4 xs:w-4" />
               접속 승인 완료
             </button>
           </form>
 
           {/* Secure Information footer info */}
-          <div className="mt-6 pt-5 border-t border-slate-900 text-center space-y-1">
-            <p className="text-[10px] text-slate-500 font-medium">
+          <div className="mt-5 xs:mt-6 pt-4 xs:pt-5 border-t border-slate-900 text-center space-y-1">
+            <p className="text-[9px] xs:text-[10px] text-slate-500 font-medium leading-relaxed">
               ※ 10분 이상 활동이 감지되지 않으면 자동으로 화면이 잠깁니다.
             </p>
-            <p className="text-[9px] text-slate-600 font-mono tracking-wider">
+            <p className="text-[8px] xs:text-[9px] text-slate-600 font-mono tracking-wider">
               © 교육과정전문가 입시 분석 센터 • ALL RIGHTS RESERVED
             </p>
           </div>
