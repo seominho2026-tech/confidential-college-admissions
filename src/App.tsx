@@ -830,72 +830,72 @@ function getSushiData() {
               </div>
 
               {/* Responsive Table Container */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-250">
+                <table className="w-full text-left border-collapse text-[10px] xs:text-[11px] sm:text-xs">
                   <thead className="bg-slate-100 border-b border-slate-200 sticky top-0">
-                    <tr className="text-slate-500 uppercase font-bold text-[10px]">
-                      <th className="px-3 md:px-4 py-3 pointer-events-none">학년도</th>
-                      <th className="px-3 md:px-4 py-3 pointer-events-none">지역</th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('university')}>
-                        <div className="flex items-center gap-1">대학명 <ArrowUpDown className="h-3 w-3" /></div>
+                    <tr className="text-slate-500 uppercase font-bold text-[9px] xs:text-[10px]">
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 pointer-events-none">학년도</th>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 pointer-events-none">지역</th>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('university')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1">대학명 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('admissionType')}>
-                        <div className="flex items-center gap-1">전형유형 <ArrowUpDown className="h-3 w-3" /></div>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('admissionType')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1">전형유형 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('subType')}>
-                        <div className="flex items-center gap-1">세부유형 <ArrowUpDown className="h-3 w-3" /></div>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('subType')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1">세부유형 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('department')}>
-                        <div className="flex items-center gap-1">학과 <ArrowUpDown className="h-3 w-3" /></div>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('department')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1">학과 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('grade')}>
-                        <div className="flex items-center gap-1 text-center justify-center">환산등급 <ArrowUpDown className="h-3 w-3" /></div>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('grade')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1 text-center justify-center">환산등급 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('status')}>
-                        <div className="flex items-center gap-1 text-center justify-center">합불여부 <ArrowUpDown className="h-3 w-3" /></div>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 cursor-pointer select-none hover:text-blue-900" onClick={() => handleSort('status')}>
+                        <div className="flex items-center gap-0.5 sm:gap-1 text-center justify-center">합불여부 <ArrowUpDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></div>
                       </th>
-                      <th className="px-3 md:px-4 py-3 text-center">전교과</th>
+                      <th className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-center">전교과</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {paginatedRecords.length > 0 ? (
                       paginatedRecords.map((r, i) => (
-                        <tr key={i} className="hover:bg-blue-50 transition-colors text-slate-700">
-                          <td className="px-3 md:px-4 py-3 font-mono font-medium text-slate-400">{r.year}</td>
-                          <td className="px-3 md:px-4 py-3">
-                            <span className="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-md text-[10px]">
+                        <tr key={i} className="hover:bg-blue-50/70 transition-colors text-slate-700">
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 font-mono font-medium text-slate-450">{r.year}</td>
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3">
+                            <span className="bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded-sm text-[9px] xs:text-[10px]">
                               {r.region}
                             </span>
                           </td>
-                          <td className="px-3 md:px-4 py-3 font-semibold text-slate-700">{r.university}</td>
-                          <td className="px-3 md:px-4 py-3 text-slate-500 font-medium">{r.admissionType}</td>
-                          <td className="px-3 md:px-4 py-3 text-slate-500 font-medium">{r.subType}</td>
-                          <td className="px-3 md:px-4 py-3 font-medium text-blue-700">{r.department}</td>
-                          <td className="px-3 md:px-4 py-3 font-mono font-bold text-slate-900 text-sm text-center">
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 font-semibold text-slate-800 whitespace-nowrap sm:whitespace-normal">{r.university}</td>
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-slate-500 font-medium whitespace-nowrap sm:whitespace-normal">{r.admissionType}</td>
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-slate-500 font-medium whitespace-nowrap sm:whitespace-normal">{r.subType}</td>
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 font-medium text-blue-700 whitespace-nowrap sm:whitespace-normal">{r.department}</td>
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 font-mono font-bold text-slate-900 text-[10px] xs:text-xs sm:text-sm text-center">
                             {r.grade.toFixed(2)}
                           </td>
-                          <td className="px-3 md:px-4 py-3 text-center">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-0.5 xs:gap-1 px-1.5 xs:px-2 py-0.5 rounded-full text-[9px] xs:text-[10px] font-bold ${
                               r.status === '합'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                                 : r.status.includes('충')
                                 ? 'bg-cyan-50 text-cyan-700 border border-cyan-100'
                                 : 'bg-rose-50 text-rose-700 border border-rose-100'
                             }`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${
+                              <span className={`h-1 xs:h-1.5 w-1 xs:w-1.5 rounded-full ${
                                 r.status === '합' ? 'bg-emerald-500' : r.status.includes('충') ? 'bg-cyan-500' : 'bg-rose-500'
                               }`}></span>
                               {r.status === '합' ? '합격' : r.status.includes('충') ? '충원' : '불합'}
                             </span>
                           </td>
-                          <td className="px-3 md:px-4 py-3 text-center font-mono text-slate-500">
+                          <td className="px-1.5 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-center font-mono text-slate-500">
                             {r.allSubjects !== null ? r.allSubjects.toFixed(2) : '-'}
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={9} className="px-3 md:px-4 py-12 text-center text-slate-400 text-xs italic">
+                        <td colSpan={9} className="px-2 xs:px-3 sm:px-4 py-12 text-center text-slate-400 text-[10px] xs:text-xs italic">
                           설정한 필터 조건에 부합하는 수시 세부 결과가 존재하지 않습니다.
                         </td>
                       </tr>
