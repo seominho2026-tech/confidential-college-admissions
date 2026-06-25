@@ -28,7 +28,9 @@ import {
   FileText,
   Lock,
   ShieldAlert,
-  LogOut
+  LogOut,
+  ShieldCheck,
+  Clock
 } from 'lucide-react';
 
 export default function App() {
@@ -37,16 +39,60 @@ export default function App() {
   // Authentication State
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('sushi_is_authenticated') === 'true';
+    // Remove old localStorage item if present to prevent stale logins
+    localStorage.removeItem('sushi_is_authenticated');
+    return sessionStorage.getItem('sushi_is_authenticated') === 'true';
   });
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isAutoLoggedOut, setIsAutoLoggedOut] = useState<boolean>(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  // 10-minute inactivity auto-logout hook
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const TIMEOUT_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+    let timeoutId: NodeJS.Timeout;
+
+    const performAutoLogout = () => {
+      setIsAuthenticated(false);
+      sessionStorage.removeItem('sushi_is_authenticated');
+      setIsAutoLoggedOut(true);
+      setPasswordInput('');
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(performAutoLogout, TIMEOUT_DURATION);
+    };
+
+    // Initialize timer
+    resetTimer();
+
+    // Listen to mouse, touch, keydown, and scroll events for user activity
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    const handleActivity = () => {
+      resetTimer();
+    };
+
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [isAuthenticated]);
+
+  const handleLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (passwordInput === '0713') {
       setIsAuthenticated(true);
-      localStorage.setItem('sushi_is_authenticated', 'true');
+      sessionStorage.setItem('sushi_is_authenticated', 'true');
       setPasswordError(null);
+      setIsAutoLoggedOut(false);
     } else {
       setPasswordError('비밀번호가 올바르지 않습니다. 다시 입력해주세요.');
     }
@@ -54,8 +100,30 @@ export default function App() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('sushi_is_authenticated');
+    sessionStorage.removeItem('sushi_is_authenticated');
+    setIsAutoLoggedOut(false);
     setPasswordInput('');
+  };
+
+  const handleKeypadPress = (val: string) => {
+    if (passwordError) setPasswordError(null);
+    if (val === 'C') {
+      setPasswordInput('');
+    } else if (val === 'back') {
+      setPasswordInput(prev => prev.slice(0, -1));
+    } else {
+      if (passwordInput.length < 4) {
+        const nextVal = passwordInput + val;
+        setPasswordInput(nextVal);
+        if (nextVal === '0713') {
+          setIsAuthenticated(true);
+          sessionStorage.setItem('sushi_is_authenticated', 'true');
+          setPasswordError(null);
+          setIsAutoLoggedOut(false);
+          setPasswordInput('');
+        }
+      }
+    }
   };
 
   // Storage & State
@@ -334,68 +402,149 @@ function getSushiData() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-        {/* Subtle decorative lights */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+        {/* Advanced Ambient Glow Lights */}
+        <div className="absolute top-1/10 left-1/10 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-1/10 right-1/10 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none"></div>
 
-        <div className="w-full max-w-md bg-slate-950/80 border border-slate-800 p-8 rounded-2xl shadow-2xl backdrop-blur-md relative z-10">
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-16 h-16 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-              <Lock className="h-7 w-7" />
-            </div>
-            
-            <div className="inline-flex items-center gap-1.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3 uppercase tracking-wider">
+        {/* Elegant Glassmorphic Container */}
+        <div className="w-full max-w-md bg-slate-900/60 border border-slate-800/80 p-6 sm:p-8 rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl relative z-10">
+          <div className="flex flex-col items-center text-center mb-6">
+            {/* Security Badge with Flashing Beacon */}
+            <div className="inline-flex items-center gap-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black px-3 py-1 rounded-full mb-4 uppercase tracking-wider shadow-inner">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
               <ShieldAlert className="h-3.5 w-3.5" />
               대외비 (CONFIDENTIAL)
             </div>
 
+            {/* Pulsing Lock Icon Halo */}
+            <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/5 animate-shimmer relative overflow-hidden">
+              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></div>
+              <Lock className="h-6 w-6" />
+            </div>
+
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
               대전 48개 일반고<br />
-              <span className="text-blue-400">수시 입시결과 조회</span>
+              <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">수시 입시결과 조회</span>
             </h1>
-            <p className="text-xs text-slate-400 mt-2 font-medium">
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-2 font-medium">
               본 시스템은 인가된 교육 전문가 전용 비공개 웹앱입니다.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-                접속 비밀번호 입력
+          {/* 10-Minute Timeout Banner */}
+          {isAutoLoggedOut && (
+            <div className="mb-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex gap-2.5 items-start text-left animate-fadeIn">
+              <Clock className="h-4.5 w-4.5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-bold text-amber-300">세션 보호 자동 잠금</p>
+                <p className="text-[10px] text-amber-400 leading-relaxed">
+                  보안 유지를 위해 <strong>10분 동안 활동이 없어</strong> 세션이 안전하게 종료되었습니다. 비밀번호를 다시 입력해 주세요.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={(e) => handleLogin(e)} className="space-y-4">
+            <div className="text-center">
+              <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                보안 패스코드 입력
               </label>
-              <div className="relative">
+
+              {/* Password Visual Dots Matrix */}
+              <div className="flex justify-center gap-3.5 my-4">
+                {[0, 1, 2, 3].map((index) => {
+                  const isActive = passwordInput.length > index;
+                  return (
+                    <div
+                      key={index}
+                      className={`w-4 h-4 rounded-full border transition-all duration-300 ${
+                        isActive
+                          ? 'bg-blue-500 border-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.85)] scale-110'
+                          : 'bg-slate-900 border-slate-800'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Input wrapper with clear centered design */}
+              <div className="relative max-w-[140px] mx-auto">
                 <input
                   type="password"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   value={passwordInput}
                   onChange={(e) => {
-                    setPasswordInput(e.target.value);
-                    if (passwordError) setPasswordError(null);
+                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                    setPasswordInput(val);
+                    if (val === '0713') {
+                      setIsAuthenticated(true);
+                      sessionStorage.setItem('sushi_is_authenticated', 'true');
+                      setPasswordError(null);
+                      setIsAutoLoggedOut(false);
+                      setPasswordInput('');
+                    }
                   }}
+                  maxLength={4}
                   placeholder="••••"
-                  className="w-full bg-slate-900/90 border border-slate-800 focus:border-blue-500/50 rounded-xl px-4 py-3 text-center text-lg font-mono text-white tracking-widest placeholder-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:outline-hidden transition-all duration-200"
+                  className="w-full text-center tracking-[0.8em] pl-[0.8em] text-xl font-mono text-white bg-slate-900/60 border border-slate-800/80 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/10 rounded-xl py-2 px-3 transition-all duration-200"
                   autoFocus
                 />
               </div>
+
               {passwordError && (
-                <p className="text-xs text-rose-500 font-bold mt-2 flex items-center justify-center gap-1">
+                <p className="text-[11px] text-rose-400 font-bold mt-2.5 flex items-center justify-center gap-1">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   {passwordError}
                 </p>
               )}
             </div>
 
+            {/* Interactive Touch Keypad */}
+            <div className="grid grid-cols-3 gap-3 max-w-[260px] mx-auto pt-3">
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'back'].map((key) => {
+                let display: React.ReactNode = key;
+                if (key === 'back') display = '⌫';
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleKeypadPress(key)}
+                    className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-black transition-all duration-150 cursor-pointer ${
+                      key === 'C'
+                        ? 'bg-slate-950/50 hover:bg-rose-500/10 text-rose-400 border border-slate-800/60 hover:border-rose-500/30 active:scale-95'
+                        : key === 'back'
+                        ? 'bg-slate-950/50 hover:bg-slate-800 text-slate-300 border border-slate-800/60 active:scale-95'
+                        : 'bg-slate-950/30 hover:bg-blue-600/10 hover:border-blue-500/30 active:scale-95 text-white border border-slate-800/60'
+                    }`}
+                  >
+                    {display}
+                  </button>
+                );
+              })}
+            </div>
+
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-sm py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/15 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-4 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 text-white font-extrabold text-xs py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              접속 인증 완료
+              <ShieldCheck className="h-4 w-4" />
+              접속 승인 완료
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-900 text-center">
-            <p className="text-[10px] text-slate-500 font-mono">
-              © 교육과정전문가 입시 분석 센터
+          {/* Secure Information footer info */}
+          <div className="mt-6 pt-5 border-t border-slate-900 text-center space-y-1">
+            <p className="text-[10px] text-slate-500 font-medium">
+              ※ 10분 이상 활동이 감지되지 않으면 자동으로 화면이 잠깁니다.
+            </p>
+            <p className="text-[9px] text-slate-600 font-mono tracking-wider">
+              © 교육과정전문가 입시 분석 센터 • ALL RIGHTS RESERVED
             </p>
           </div>
         </div>
