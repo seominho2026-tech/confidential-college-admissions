@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대입 수시 결과 대시보드</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables.js CSS -->
+  <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet font-sans">
+  <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+  <!-- FontAwesome CDN for Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: #f4f6f9;
+      color: #333333;
+    }
+    
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    
+    .filter-card {
+      background: #ffffff;
+      border-left: 5px solid #0d6efd;
+    }
+    
+    .stat-card {
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+    
+    .badge-pass {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+    .badge-pass-add {
+      background-color: #cff4fc;
+      color: #055160;
+    }
+    .badge-fail {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+    
+    .custom-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    /* Loading Spinner Overlay */
+    #loadingOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .spinner-border {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loadingOverlay">
+    <div class="spinner-border text-primary mb-3" role="status">
+      <span class="visually-hidden">로딩 중...</span>
+    </div>
+    <h5 class="fw-bold text-secondary">수시 전형 데이터 불러오는 중...</h5>
+    <p class="text-muted small">잠시만 기다려 주세요.</p>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#"><i class="fa-solid fa-graduation-cap me-2"></i>대입 수시 결과 대시보드</a>
+      <span class="navbar-text text-white-50 d-none d-sm-inline">
+        Google Apps Script WebApp
+      </span>
+    </div>
+  </nav>
+
+  <div class="container pb-5">
+    
+    <!-- 1. Filter Section -->
+    <div class="card filter-card p-4">
+      <h5 class="card-title fw-bold mb-3"><i class="fa-solid fa-sliders me-2 text-primary"></i>검색 필터 조건</h5>
+      <div class="row g-3">
+        <!-- Region -->
+        <div class="col-md-3">
+          <label for="filterRegion" class="form-label fw-semibold text-muted">지역 선택</label>
+          <select id="filterRegion" class="form-select">
+            <option value="">전체 지역</option>
+          </select>
+        </div>
+        <!-- University -->
+        <div class="col-md-3">
+          <label for="filterUniversity" class="form-label fw-semibold text-muted">대학명 (검색 및 선택)</label>
+          <input type="text" id="filterUniversity" class="form-control" placeholder="대학명 입력 (예: 서울대)" list="universitySuggestions">
+          <datalist id="universitySuggestions"></datalist>
+        </div>
+        <!-- Department -->
+        <div class="col-md-3">
+          <label for="filterDepartment" class="form-label fw-semibold text-muted">학과명 (키워드)</label>
+          <input type="text" id="filterDepartment" class="form-control" placeholder="학과 키워드 입력 (예: 의예)">
+        </div>
+        <!-- Grade Bounds -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold text-muted">환산등급 내신 범위 (<span id="gradeValueDisplay">1.0 ~ 9.0</span>)</label>
+          <div class="d-flex align-items-center gap-2">
+            <input type="number" id="minGrade" class="form-control form-control-sm" value="1.0" min="1.0" max="9.0" step="0.1" style="width: 70px;">
+            <span class="text-muted">~</span>
+            <input type="number" id="maxGrade" class="form-control form-control-sm" value="9.0" min="1.0" max="9.0" step="0.1" style="width: 70px;">
+            <button id="btnResetFilters" class="btn btn-outline-secondary btn-sm" title="필터 초기화">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Stat Cards Section -->
+    <div class="row mb-4">
+      <!-- Total Apps -->
+      <div class="col-md-4">
+        <div class="card stat-card bg-white p-4 h-100 border-start border-primary border-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted text-uppercase fw-bold mb-1 small">총 지원 건수</h6>
+              <h2 class="fw-bold mb-0 text-dark" id="statTotal">0</h2>
+            </div>
+            <div class="bg-primary-subtle text-primary p-3 rounded-circle" style="background-color: rgba(13, 110, 253, 0.1);">
+              <i class="fa-solid fa-users fa-xl"></i>
+            </div>
+          </div>
+          <div class="mt-3 text-muted small" id="statTotalSub">필터링된 전체 학생 풀</div>
+        </div>
+      </div>
+      <!-- Pass Apps -->
+      <div class="col-md-4">
+        <div class="card stat-card bg-white p-4 h-100 border-start border-success border-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted text-uppercase fw-bold mb-1 small">총 합격 건수 (충원 포함)</h6>
+              <h2 class="fw-bold mb-0 text-success" id="statPass">0 <span class="fs-5 fw-normal text-muted" id="statPassRate">(0%)</span></h2>
+            </div>
+            <div class="bg-success-subtle text-success p-3 rounded-circle" style="background-color: rgba(25, 135, 84, 0.1);">
+              <i class="fa-solid fa-circle-check fa-xl"></i>
+            </div>
+          </div>
+          <div class="mt-3 text-muted small" id="statPassSub">최초합 및 충원합격 데이터</div>
+        </div>
+      </div>
+      <!-- Avg Pass Grade -->
+      <div class="col-md-4">
+        <div class="card stat-card bg-white p-4 h-100 border-start border-warning border-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted text-uppercase fw-bold mb-1 small">평균 합격 내신등급</h6>
+              <h2 class="fw-bold mb-0 text-warning" id="statAvgGrade">-</h2>
+            </div>
+            <div class="bg-warning-subtle text-warning p-3 rounded-circle" style="background-color: rgba(255, 193, 7, 0.1);">
+              <i class="fa-solid fa-chart-line fa-xl"></i>
+            </div>
+          </div>
+          <div class="mt-3 text-muted small" id="statAvgSub">환산등급 1등급에 가까울수록 우수</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Visualization Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card p-4">
+          <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>내신 환산등급별 합격 여부 분포 (산점도)</h5>
+          <div style="height: 380px; position: relative;">
+            <canvas id="scatterChart"></canvas>
+          </div>
+          <div class="mt-2 text-muted small bg-light p-2 rounded">
+            <i class="fa-solid fa-info-circle me-1 text-primary"></i>
+            <strong>안내:</strong> X축은 <strong>내신 환산등급 (1등급이 가장 왼쪽)</strong>을 의미하며, Y축은 점수 또는 가독성을 위해 배치된 데이터의 산점도 분포입니다. 합격은 녹색, 충원합격은 청색, 불합격은 적색으로 표시됩니다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Data Table Section -->
+    <div class="card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-list me-2 text-primary"></i>수시 상세 지원 결과 목록</h5>
+        <button id="btnExportCSV" class="btn btn-outline-success btn-sm">
+          <i class="fa-solid fa-file-excel me-1"></i>Excel 백업용 CSV 다운로드
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table id="sushiTable" class="table table-hover custom-table align-middle w-100">
+          <thead>
+            <tr>
+              <th>학년도</th>
+              <th>지역</th>
+              <th>대학명</th>
+              <th>전형유형</th>
+              <th>계열</th>
+              <th>학과</th>
+              <th>환산등급</th>
+              <th>합불결과</th>
+              <th>전교과</th>
+              <th>국수영시</th>
+              <th>국영수과</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamic Injection -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JS Libraries -->
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (DataTables 필수) -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- DataTables Core & Responsive JS -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // 전역 데이터 원본 저장소
+    let rawData = [];
+    let filteredData = [];
+    let dataTableInstance = null;
+    let chartInstance = null;
+
+    // 앱 기동 이벤트
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSushiDataToServer();
+    });
+
+    /**
+     * Google Apps Script 백엔드 함수(getSushiData)를 호출합니다.
+     */
+    function loadSushiDataToServer() {
+      // 로딩 디스플레이 유지
+      showLoading(true);
+
+      // 로컬 브라우저 디버깅용 더미데이터 로드 세팅
+      if (typeof google === 'undefined' || !google.script) {
+        console.warn('Google script API를 발견하지 못했습니다. 로컬 디버그용 샘플 데이터를 사용합니다.');
+        setTimeout(() => {
+          rawData = getFallbackMockData();
+          initDashboard();
+          showLoading(false);
+        }, 1200);
+        return;
+      }
+
+      // 실제 구글 스크립트 실행 환경 호출
+      google.script.run
+        .withSuccessHandler((response) => {
+          rawData = response || [];
+          console.log("시트 데이터 로드 성공. 건수: " + rawData.length);
+          initDashboard();
+          showLoading(false);
+        })
+        .withFailureHandler((error) => {
+          alert("데이터를 가져오는 도중 에러가 발생했습니다: " + error.message);
+          showLoading(false);
+        })
+        .getSushiData();
+    }
+
+    /**
+     * 데이터를 수신한 후 필터 목록과 테이블, 슬라이더 등을 통합 구축합니다.
+     */
+    function initDashboard() {
+      setupFilterOptions();
+      setupEventListeners();
+      applyFiltersAndRefresh();
+    }
+
+    /**
+     * 고유값 추출을 기반으로 지역 및 대학 목록 suggestions 구성
+     */
+    function setupFilterOptions() {
+      const regionsSet = new Set();
+      const uniSet = new Set();
+      
+      rawData.forEach(record => {
+        if (record.region) regionsSet.add(record.region);
+        if (record.university) uniSet.add(record.university);
+      });
+
+      // '지역' 드롭다운 채우기
+      const selectRegion = document.getElementById('filterRegion');
+      // 기존 옵션 리셋 (첫번째 옵션 '전체 지역' 제외)
+      selectRegion.innerHTML = '<option value="">전체 지역</option>';
+      Array.from(regionsSet).sort().forEach(region => {
+        const option = document.createElement('option');
+        option.value = region;
+        option.textContent = region;
+        selectRegion.appendChild(option);
+      });
+
+      // '대학명' 자동완성 Datalist 채우기
+      const uniDatalist = document.getElementById('universitySuggestions');
+      uniDatalist.innerHTML = '';
+      Array.from(uniSet).sort().forEach(uni => {
+        const option = document.createElement('option');
+        option.value = uni;
+        uniDatalist.appendChild(option);
+      });
+    }
+
+    /**
+     * 실시간 필터링 업데이트를 위한 UI 이벤트 바인딩
+     */
+    function setupEventListeners() {
+      const filterIds = ['filterRegion', 'filterUniversity', 'filterDepartment', 'minGrade', 'maxGrade'];
+      
+      filterIds.forEach(id => {
+        const element = document.getElementById(id);
+        const eventType = (element.tagName === 'INPUT' && element.type === 'text') ? 'input' : 'change';
+        element.addEventListener(eventType, () => {
+          // 등급값 유효성 교정 후 갱신
+          validateGradeInputs();
+          applyFiltersAndRefresh();
+        });
+      });
+
+      // 필터 초기화 버튼
+      document.getElementById('btnResetFilters').addEventListener('click', () => {
+        document.getElementById('filterRegion').value = '';
+        document.getElementById('filterUniversity').value = '';
+        document.getElementById('filterDepartment').value = '';
+        document.getElementById('minGrade').value = '1.0';
+        document.getElementById('maxGrade').value = '9.0';
+        applyFiltersAndRefresh();
+      });
+
+      // CSV 백업 다운로드
+      document.getElementById('btnExportCSV').addEventListener('click', exportCSV);
+    }
+
+    /**
+     * 내신등급 슬라이더/입력 박스 최소, 최대 범위 유효성 체크
+     */
+    function validateGradeInputs() {
+      const minEl = document.getElementById('minGrade');
+      const maxEl = document.getElementById('maxGrade');
+      let minVal = parseFloat(minEl.value) || 1.0;
+      let maxVal = parseFloat(maxEl.value) || 9.0;
+
+      // 범위 고정 (1등급 ~ 9등급)
+      if (minVal < 1.0) minVal = 1.0;
+      if (minVal > 9.0) minVal = 9.0;
+      if (maxVal < 1.0) maxVal = 1.0;
+      if (maxVal > 9.0) maxVal = 9.0;
+
+      // 최소값이 최대값보다 높은 경우 스왑 또는 교정
+      if (minVal > maxVal) {
+        let temp = minVal;
+        minVal = maxVal;
+        maxVal = temp;
+      }
+
+      minEl.value = minVal.toFixed(1);
+      maxEl.value = maxVal.toFixed(1);
+
+      document.getElementById('gradeValueDisplay').textContent = `${minVal.toFixed(1)} ~ ${maxVal.toFixed(1)}`;
+    }
+
+    /**
+     * 필터 조건에 대응하여 데이터 필터링 후 통계, 차트, 테이블 갱신
+     */
+    function applyFiltersAndRefresh() {
+      const region = document.getElementById('filterRegion').value;
+      const university = document.getElementById('filterUniversity').value.toLowerCase().trim();
+      const department = document.getElementById('filterDepartment').value.toLowerCase().trim();
+      const minGrade = parseFloat(document.getElementById('minGrade').value);
+      const maxGrade = parseFloat(document.getElementById('maxGrade').value);
+
+      filteredData = rawData.filter(record => {
+        // '환산등급'이 비어있는 데이터는 수집 시점에 이미 제거된 상태
+        
+        // 1. 지역 조건
+        if (region && record.region !== region) return false;
+        
+        // 2. 대학명 키워드 매칭
+        if (university && !record.university.toLowerCase().includes(university)) return false;
+        
+        // 3. 학과명 키워드 매칭
+        if (department && !record.department.toLowerCase().includes(department)) return false;
+        
+        // 4. 환산등급 범위 매칭
+        if (record.grade < minGrade || record.grade > maxGrade) return false;
+
+        return true;
+      });
+
+      // 대시보드 리액티브 수치 및 컴포넌트 데이터 연동
+      updateStatCards();
+      updateTableAndDataTables();
+      updateScatterChart();
+    }
+
+    /**
+     * 상단 핵심 통계 요약 카드 데이터 계산 및 표현
+     */
+    function updateStatCards() {
+      const totalCount = filteredData.length;
+      
+      // 합격여부: '합' 또는 '합(충)' 단어가 들어간 행 카운트
+      const passRecords = filteredData.filter(r => r.status.includes('합'));
+      const passCount = passRecords.length;
+      const passRate = totalCount > 0 ? ((passCount / totalCount) * 100).toFixed(1) : 0;
+      
+      // 평균 합격 내신 등급 계산
+      let avgGrade = "-";
+      if (passCount > 0) {
+        const sum = passRecords.reduce((acc, curr) => acc + curr.grade, 0);
+        avgGrade = (sum / passCount).toFixed(2) + "등급";
+      }
+
+      document.getElementById('statTotal').textContent = totalCount.toLocaleString() + " 건";
+      document.getElementById('statPass').innerHTML = `${passCount.toLocaleString()} <span class="fs-5 fw-normal text-muted">(${passRate}%)</span>`;
+      document.getElementById('statAvgGrade').textContent = avgGrade;
+    }
+
+    /**
+     * 리스트 상세 테이블 데이터 바인딩 및 DataTables 가동
+     */
+    function updateTableAndDataTables() {
+      const tbody = document.querySelector('#sushiTable tbody');
+      
+      // 기존 DataTables 객체가 돌고 있으면 초기화(Destroy)
+      if (dataTableInstance) {
+        dataTableInstance.destroy();
+      }
+
+      // 테이블 내용물 작성
+      tbody.innerHTML = '';
+      filteredData.forEach(record => {
+        const tr = document.createElement('tr');
+        
+        // 합/합(충)/불 여부 뱃지 매핑
+        let statusBadge = '';
+        if (record.status.trim() === '합') {
+          statusBadge = '<span class="badge badge-pass px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i>최초 합격</span>';
+        } else if (record.status.trim().includes('충') || record.status.trim().includes('대기')) {
+          statusBadge = '<span class="badge badge-pass-add px-2 py-1"><i class="fa-solid fa-clock-rotate-left me-1"></i>충원 합격</span>';
+        } else {
+          statusBadge = '<span class="badge badge-fail px-2 py-1"><i class="fa-solid fa-circle-xmark me-1"></i>불합격</span>';
+        }
+
+        // 각 셀 바인딩 (null 값 대응)
+        const formatNum = (v) => v !== null ? v.toFixed(2) : '-';
+
+        tr.innerHTML = `
+          <td class="fw-medium text-secondary">${record.year || '24'}</td>
+          <td><span class="badge bg-secondary-subtle text-dark">${record.region}</span></td>
+          <td class="fw-bold">${record.university}</td>
+          <td><span class="small">${record.admissionType || '-'}</span></td>
+          <td><span class="small">${record.track || '-'}</span></td>
+          <td class="fw-semibold text-primary">${record.department}</td>
+          <td class="fw-bold text-success">${record.grade.toFixed(2)}</td>
+          <td>${statusBadge}</td>
+          <td>${formatNum(record.allSubjects)}</td>
+          <td>${formatNum(record.korMathEngSoc)}</td>
+          <td>${formatNum(record.korEngMathSci)}</td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+
+      // DataTables 새로 초기화
+      dataTableInstance = $('#sushiTable').DataTable({
+        language: {
+          search: "테이블 자체검색:",
+          lengthMenu: "_MENU_개씩 보기",
+          info: "검색 결과 _START_ - _END_ / 총 _TOTAL_ 건",
+          infoEmpty: "데이터 없음",
+          infoFiltered: "(전체 데이터 _MAX_ 건 중 필터 필터링)",
+          zeroRecords: "지정한 조건과 일치하는 수시 결과가 없습니다.",
+          paginate: {
+            first: "처음",
+            previous: "이전",
+            next: "다음",
+            last: "마지막"
+          }
+        },
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100],
+        responsive: true,
+        ordering: true,
+        order: [[6, "asc"]], // 환산등급 오름차순(우수한 순) 디폴트 정렬
+        columnDefs: [
+          { responsivePriority: 1, targets: 2 }, // 대학명 우선 노출
+          { responsivePriority: 2, targets: 5 }, // 학과 우선 노출
+          { responsivePriority: 3, targets: 6 }, // 환산등급 우선 노출
+          { responsivePriority: 4, targets: 7 }  // 합불결과 우선 노출
+        ]
+      });
+    }
+
+    /**
+     * Chart.js를 이용해 환산등급 분포도를 시각화합니다 (산점도)
+     */
+    function updateScatterChart() {
+      const ctx = document.getElementById('scatterChart').getContext('2d');
+      
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      // 그룹 데이터 분할
+      const datasetPass = [];
+      const datasetPassAdd = [];
+      const datasetFail = [];
+
+      filteredData.forEach((record, index) => {
+        // Y축은 환산점수가 있으면 환산점수(y)로 활용하고, 없으면 데이터 인덱스에 따른 일직선 중복충돌을 완화하기 위해
+        // 약간의 랜덤 오프셋/상대적 환산 순서를 넣어 산점도 상에서 점들이 뭉개져 겹치는 비주얼을 예방합니다.
+        let yValue = record.score !== null ? record.score : (100 - (record.grade * 10) + (Math.sin(index) * 2));
+        
+        const dataPoint = {
+          x: record.grade,
+          y: yValue,
+          label: `${record.university} | ${record.department} (${record.grade.toFixed(2)}등급, 결과: ${record.status})`
+        };
+
+        if (record.status === '합') {
+          datasetPass.push(dataPoint);
+        } else if (record.status.includes('충')) {
+          datasetPassAdd.push(dataPoint);
+        } else {
+          datasetFail.push(dataPoint);
+        }
+      });
+
+      // Chart.js 인스턴스 신규 생성
+      chartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: '합격',
+              data: datasetPass,
+              backgroundColor: 'rgba(25, 135, 84, 0.75)',
+              borderColor: 'rgb(25, 135, 84)',
+              borderWidth: 1,
+              pointRadius: 6,
+              pointHoverRadius: 8
+            },
+            {
+              label: '충원합격',
+              data: datasetPassAdd,
+              backgroundColor: 'rgba(13, 202, 240, 0.75)',
+              borderColor: 'rgb(13, 202, 240)',
+              borderWidth: 1,
+              pointRadius: 6,
+              pointHoverRadius: 8
+            },
+            {
+              label: '불합격',
+              data: datasetFail,
+              backgroundColor: 'rgba(220, 53, 69, 0.75)',
+              borderColor: 'rgb(220, 53, 69)',
+              borderWidth: 1,
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: '환산 내신등급 (왼쪽일수록 우수)',
+                font: { weight: 'bold' }
+              },
+              // 1등급이 가장 왼쪽이고 9등급이 가장 오른쪽에 위치하므로 오름차순
+              min: 1.0,
+              max: 9.0,
+              ticks: {
+                stepSize: 0.5
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: '환산점수 또는 분포지점',
+                font: { weight: 'bold' }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.03)'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.raw.label;
+                }
+              }
+            },
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /**
+     * 데이터 백업 다운로드용 CSV 생성 가동
+     */
+    function exportCSV() {
+      if (filteredData.length === 0) {
+        alert("다운로드할 데이터가 존재하지 않습니다.");
+        return;
+      }
+
+      const headers = ['학년도', '지역', '대학명', '전형유형', '학과', '환산등급', '합불결과', '전교과', '국수영시', '국영수과'];
+      const rows = filteredData.map(r => [
+        r.year,
+        `"${r.region}"`,
+        `"${r.university}"`,
+        `"${r.admissionType}"`,
+        `"${r.department}"`,
+        r.grade,
+        `"${r.status}"`,
+        r.allSubjects || '',
+        r.korMathEngSoc || '',
+        r.korEngMathSci || ''
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", "대입_수시_결과_필터링_백업.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    /**
+     * 로딩 오버레이 뷰 제어
+     */
+    function showLoading(isVisible) {
+      document.getElementById('loadingOverlay').style.display = isVisible ? 'flex' : 'none';
+    }
+
+    /**
+     * 로컬 환경 테스트를 위한 Mock 데이터셋 반환
+     */
+    function getFallbackMockData() {
+      return [
+        { year: "24", region: "대전", university: "충남대학교(대전)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 100.00, status: "합", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "서울", university: "가톨릭대학교(성의)", admissionType: "종합", track: "자연", department: "의예과", grade: 1.00, score: 998.00, status: "합(충)", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "서울", university: "경희대학교(서울)", admissionType: "교과", track: "자연", department: "의예과(자연계열)", grade: 1.00, score: 700.00, status: "불", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "서울", university: "고려대학교(서울)", admissionType: "교과", track: "자연", department: "의과대학", grade: 1.00, score: 80.00, status: "불", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "충남", university: "순천향대학교(아산)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 1000.00, status: "합", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "충북", university: "충북대학교(청주)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 80.00, status: "합", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "경기", university: "성균관대학교(수원)", admissionType: "종합", track: "자연", department: "의예과", grade: 1.00, score: 995.00, status: "합(충)", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "서울", university: "서울대학교(서울)", admissionType: "종합", track: "자연", department: "의예과", grade: 1.00, score: 997.00, status: "불", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "서울", university: "연세대학교(서울)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 98.68, status: "합", allSubjects: 1.00, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "인천", university: "가천대학교(메디컬)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 1000.00, status: "합(충)", allSubjects: 1.03, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "제주", university: "제주대학교(제주)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.00, score: 1000.00, status: "합", allSubjects: 1.03, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "충북", university: "건국대학교(글로컬)", admissionType: "교과", track: "자연", department: "의예과", grade: 1.04, score: 1027.90, status: "합", allSubjects: 1.03, korMathEngSoc: 1.00, korEngMathSci: 1.00 },
+        { year: "24", region: "대전", university: "건양대학교(대전)", admissionType: "교과", track: "자연", department: "의학과", grade: 1.02, score: 900.00, status: "불", allSubjects: 1.04, korMathEngSoc: 1.03, korEngMathSci: 1.02 },
+        { year: "24", region: "대전", university: "대전대학교(대전)", admissionType: "교과", track: "자연", department: "한의예과", grade: 1.03, score: 999.73, status: "불", allSubjects: 1.04, korMathEngSoc: 1.03, korEngMathSci: 1.02 },
+        { year: "24", region: "서울", university: "한양대학교(서울)", admissionType: "교과", track: "자연", department: "융합전자공학부", grade: 1.02, score: 999.27, status: "합", allSubjects: 1.04, korMathEngSoc: 1.03, korEngMathSci: 1.02 },
+        { year: "24", region: "전북", university: "전북대학교(전주)", admissionType: "교과", track: "자연", department: "치의예과", grade: 1.02, score: 1001.43, status: "불", allSubjects: 1.04, korMathEngSoc: 1.03, korEngMathSci: 1.02 },
+        { year: "24", region: "충북", university: "충북대학교(청주)", admissionType: "교과", track: "자연", department: "수의예과", grade: 1.02, score: 79.97, status: "합", allSubjects: 1.04, korMathEngSoc: 1.03, korEngMathSci: 1.02 },
+        { year: "24", region: "서울", university: "고려대학교(서울)", admissionType: "종합", track: "자연", department: "의과대학", grade: 1.08, score: null, status: "합", allSubjects: 1.08, korMathEngSoc: 1.08, korEngMathSci: 1.08 },
+        { year: "24", region: "부산", university: "부산대학교(부산)", admissionType: "교과", track: "자연", department: "한의학전문대학원", grade: 1.21, score: 98.24, status: "합", allSubjects: 1.22, korMathEngSoc: 1.21, korEngMathSci: 1.22 }
+      ];
+    }
+  </script>
+</body>
+</html>

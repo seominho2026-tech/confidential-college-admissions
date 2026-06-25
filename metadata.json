@@ -1,0 +1,8 @@
+{
+  "name": "교육과정전문가 수시 입결",
+  "description": "구글 스프레드시트 수시 결과를 바탕으로 신속하고 정밀한 대학 입시 성적 및 합격 데이터를 분석, 조회 및 시각화하는 반응형 프리미엄 대시보드 웹앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
