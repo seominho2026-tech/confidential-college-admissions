@@ -136,7 +136,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isUsingFallback, setIsUsingFallback] = useState<boolean>(false);
 
-  // Input Filters
+  // Input Filters (Staged Drafts)
   const [filterYear, setFilterYear] = useState<string>('');
   const [filterRegion, setFilterRegion] = useState<string>('');
   const [filterUniversity, setFilterUniversity] = useState<string>('');
@@ -144,6 +144,36 @@ export default function App() {
   const [filterDepartment, setFilterDepartment] = useState<string>('');
   const [minGrade, setMinGrade] = useState<number>(1.0);
   const [maxGrade, setMaxGrade] = useState<number>(9.0);
+
+  // Applied Filters (Used for actual table and statistic rendering)
+  const [appliedYear, setAppliedYear] = useState<string>('');
+  const [appliedRegion, setAppliedRegion] = useState<string>('');
+  const [appliedUniversity, setAppliedUniversity] = useState<string>('');
+  const [appliedAdmissionType, setAppliedAdmissionType] = useState<string>('');
+  const [appliedDepartment, setAppliedDepartment] = useState<string>('');
+  const [appliedMinGrade, setAppliedMinGrade] = useState<number>(1.0);
+  const [appliedMaxGrade, setAppliedMaxGrade] = useState<number>(9.0);
+
+  // Check if there are changes in filters that haven't been applied yet
+  const hasUnappliedFilters = useMemo(() => {
+    return (
+      filterYear !== appliedYear ||
+      filterRegion !== appliedRegion ||
+      filterUniversity !== appliedUniversity ||
+      filterAdmissionType !== appliedAdmissionType ||
+      filterDepartment !== appliedDepartment ||
+      minGrade !== appliedMinGrade ||
+      maxGrade !== appliedMaxGrade
+    );
+  }, [
+    filterYear, appliedYear,
+    filterRegion, appliedRegion,
+    filterUniversity, appliedUniversity,
+    filterAdmissionType, appliedAdmissionType,
+    filterDepartment, appliedDepartment,
+    minGrade, appliedMinGrade,
+    maxGrade, appliedMaxGrade
+  ]);
 
   // Sorting
   const [sortField, setSortField] = useState<keyof StudentRecord>('grade');
@@ -178,6 +208,17 @@ export default function App() {
 
   const handleSearchClick = () => {
     setHasSearched(true);
+    setCurrentPage(1);
+    
+    // Sync staged filter states to applied states
+    setAppliedYear(filterYear);
+    setAppliedRegion(filterRegion);
+    setAppliedUniversity(filterUniversity);
+    setAppliedAdmissionType(filterAdmissionType);
+    setAppliedDepartment(filterDepartment);
+    setAppliedMinGrade(minGrade);
+    setAppliedMaxGrade(maxGrade);
+
     loadData(spreadsheetId);
   };
 
@@ -190,6 +231,15 @@ export default function App() {
     setFilterDepartment('');
     setMinGrade(1.0);
     setMaxGrade(9.0);
+
+    setAppliedYear('');
+    setAppliedRegion('');
+    setAppliedUniversity('');
+    setAppliedAdmissionType('');
+    setAppliedDepartment('');
+    setAppliedMinGrade(1.0);
+    setAppliedMaxGrade(9.0);
+
     setCurrentPage(1);
   };
 
@@ -234,32 +284,32 @@ export default function App() {
   const filteredRecords = useMemo(() => {
     return records.filter(record => {
       // 0. Year
-      if (filterYear && String(record.year) !== filterYear) return false;
+      if (appliedYear && String(record.year) !== appliedYear) return false;
 
       // 1. Region
-      if (filterRegion && record.region !== filterRegion) return false;
+      if (appliedRegion && record.region !== appliedRegion) return false;
       
       // 2. University Search
-      if (filterUniversity && !record.university.toLowerCase().includes(filterUniversity.toLowerCase().trim())) {
+      if (appliedUniversity && !record.university.toLowerCase().includes(appliedUniversity.toLowerCase().trim())) {
         return false;
       }
 
       // 3. AdmissionType Filter
-      if (filterAdmissionType && record.admissionType !== filterAdmissionType) return false;
+      if (appliedAdmissionType && record.admissionType !== appliedAdmissionType) return false;
 
       // 3.5 Department Search
-      if (filterDepartment && !record.department.toLowerCase().includes(filterDepartment.toLowerCase().trim())) {
+      if (appliedDepartment && !record.department.toLowerCase().includes(appliedDepartment.toLowerCase().trim())) {
         return false;
       }
 
       // 4. GPA Range
-      if (record.grade < minGrade || record.grade > maxGrade) {
+      if (record.grade < appliedMinGrade || record.grade > appliedMaxGrade) {
         return false;
       }
 
       return true;
     });
-  }, [records, filterYear, filterRegion, filterUniversity, filterAdmissionType, filterDepartment, minGrade, maxGrade]);
+  }, [records, appliedYear, appliedRegion, appliedUniversity, appliedAdmissionType, appliedDepartment, appliedMinGrade, appliedMaxGrade]);
 
   // Sort Records
   const sortedRecords = useMemo(() => {
@@ -736,13 +786,24 @@ function getSushiData() {
 
           {/* New prominent "조회하기" Action inside Filters Card */}
           <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <span className="text-xs text-slate-500 font-semibold">
-              ※ 위의 상세 필터 조건을 설정한 후 우측 버튼을 눌러 데이터를 동기화 및 조회하세요.
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-slate-500 font-semibold">
+                ※ 위의 상세 필터 조건을 설정한 후 우측 버튼을 눌러 데이터를 동기화 및 조회하세요.
+              </span>
+              {hasSearched && hasUnappliedFilters && (
+                <span className="text-[11px] text-amber-600 font-bold flex items-center gap-1 animate-pulse">
+                  ⚠️ 필터 변경 사항이 있습니다. '조회하기' 버튼을 클릭하여 적용해 주세요.
+                </span>
+              )}
+            </div>
             <button
               onClick={handleSearchClick}
               disabled={loading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-extrabold text-xs sm:text-sm px-8 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-150 cursor-pointer"
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 font-extrabold text-xs sm:text-sm px-8 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-150 cursor-pointer ${
+                hasSearched && hasUnappliedFilters
+                  ? "bg-amber-500 hover:bg-amber-600 text-white ring-2 ring-amber-200"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
             >
               {loading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
