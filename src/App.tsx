@@ -131,7 +131,8 @@ export default function App() {
     return localStorage.getItem('sushi_spreadsheet_id') || defaultSpreadsheetId;
   });
   const [records, setRecords] = useState<StudentRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isUsingFallback, setIsUsingFallback] = useState<boolean>(false);
 
@@ -175,9 +176,10 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
+  const handleSearchClick = () => {
+    setHasSearched(true);
     loadData(spreadsheetId);
-  }, []);
+  };
 
   // Filter Reset
   const handleResetFilters = () => {
@@ -194,7 +196,8 @@ export default function App() {
   // Extract Dynamic Filter Suggestions
   const years = useMemo(() => {
     const set = new Set<string>();
-    records.forEach(r => {
+    const source = records.length > 0 ? records : FALLBACK_SAMPLE_DATA;
+    source.forEach(r => {
       if (r.year) set.add(String(r.year));
     });
     return Array.from(set).sort((a, b) => b.localeCompare(a));
@@ -202,7 +205,8 @@ export default function App() {
 
   const regions = useMemo(() => {
     const set = new Set<string>();
-    records.forEach(r => {
+    const source = records.length > 0 ? records : FALLBACK_SAMPLE_DATA;
+    source.forEach(r => {
       if (r.region) set.add(r.region);
     });
     return Array.from(set).sort();
@@ -210,7 +214,8 @@ export default function App() {
 
   const universities = useMemo(() => {
     const set = new Set<string>();
-    records.forEach(r => {
+    const source = records.length > 0 ? records : FALLBACK_SAMPLE_DATA;
+    source.forEach(r => {
       if (r.university) set.add(r.university);
     });
     return Array.from(set).sort();
@@ -218,7 +223,8 @@ export default function App() {
 
   const admissionTypes = useMemo(() => {
     const set = new Set<string>();
-    records.forEach(r => {
+    const source = records.length > 0 ? records : FALLBACK_SAMPLE_DATA;
+    source.forEach(r => {
       if (r.admissionType) set.add(r.admissionType);
     });
     return Array.from(set).sort();
@@ -590,17 +596,194 @@ function getSushiData() {
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Top Row: Responsive Filters Grid */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-blue-900" />
+              <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">수시 상세 필터링 조건</h4>
+            </div>
+            <button
+              onClick={handleResetFilters}
+              className="text-xs text-slate-500 hover:text-blue-600 transition flex items-center gap-1 font-bold"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              필터 초기화
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            {/* 0. Year Selector */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">학년도 선택</label>
+              <select
+                value={filterYear}
+                onChange={(e) => { setFilterYear(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
+              >
+                <option value="">전체 학년도 ({years.length}개 학년도)</option>
+                {years.map(y => (
+                  <option key={y} value={y}>{y}학년도</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 1. Region Selector */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">지역 선택</label>
+              <select
+                value={filterRegion}
+                onChange={(e) => { setFilterRegion(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
+              >
+                <option value="">전체 지역 ({regions.length}개 지역)</option>
+                {regions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 1.5 Admission Type Selector */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">전형유형 선택</label>
+              <select
+                value={filterAdmissionType}
+                onChange={(e) => { setFilterAdmissionType(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
+              >
+                <option value="">전체 전형 ({admissionTypes.length}개 전형)</option>
+                {admissionTypes.map(at => (
+                  <option key={at} value={at}>{at}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 2. University Selector with suggestion search */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">대학명 입력</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="uni-datalist"
+                  value={filterUniversity}
+                  onChange={(e) => { setFilterUniversity(e.target.value); setCurrentPage(1); }}
+                  placeholder="대학명 검색 (예: 서울대학교)"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
+                />
+                <datalist id="uni-datalist">
+                  {universities.map(u => (
+                    <option key={u} value={u} />
+                  ))}
+                </datalist>
+                <Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Department Search */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">학과명 키워드</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={filterDepartment}
+                  onChange={(e) => { setFilterDepartment(e.target.value); setCurrentPage(1); }}
+                  placeholder="학과 키워드 입력 (예: 의예)"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
+                />
+                <Building className="absolute right-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 4. Converted Grade Slider */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">내신 등급 범위</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.05"
+                  min="1.0"
+                  max="9.0"
+                  value={minGrade}
+                  onChange={(e) => {
+                    const val = Math.max(1, Math.min(9, parseFloat(e.target.value) || 1));
+                    setMinGrade(val);
+                    setCurrentPage(1);
+                  }}
+                  className="w-16 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-center font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                />
+                <div className="h-[2px] flex-1 bg-slate-200 relative">
+                  <div className="absolute h-full bg-blue-600" style={{ left: `${((minGrade - 1) / 8) * 100}%`, right: `${100 - ((maxGrade - 1) / 8) * 100}%` }}></div>
+                </div>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="1.0"
+                  max="9.0"
+                  value={maxGrade}
+                  onChange={(e) => {
+                    const val = Math.max(1, Math.min(9, parseFloat(e.target.value) || 9));
+                    setMaxGrade(val);
+                    setCurrentPage(1);
+                  }}
+                  className="w-16 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-center font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* New prominent "조회하기" Action inside Filters Card */}
+          <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-xs text-slate-500 font-semibold">
+              ※ 위의 상세 필터 조건을 설정한 후 우측 버튼을 눌러 데이터를 동기화 및 조회하세요.
+            </span>
+            <button
+              onClick={handleSearchClick}
+              disabled={loading}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-extrabold text-xs sm:text-sm px-8 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-150 cursor-pointer"
+            >
+              {loading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              조회하기
+            </button>
+          </div>
+        </div>
+
+        {/* Content Area Below Filters */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
+          <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
             <RefreshCw className="h-10 w-10 text-blue-900 animate-spin mb-4" />
             <h3 className="text-base font-bold text-slate-900">데이터를 로딩하고 있으니 잠시 기다려 주십시오</h3>
             <p className="text-xs text-slate-500 mt-1">
               실시간 구글 스프레드시트의 수시 분석 데이터를 동기화하고 있습니다.
             </p>
           </div>
+        ) : !hasSearched ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 text-center shadow-sm max-w-2xl mx-auto my-4 animate-fadeIn">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
+              <Database className="h-7 w-7" />
+            </div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight">수시 입시 결과 데이터 조회 대기 중</h3>
+            <p className="text-xs sm:text-sm text-slate-500 mt-2.5 max-w-md mx-auto leading-relaxed font-medium">
+              원하시는 학년도, 지역, 대학명, 학과, 내신 등급 등의 필터를 설정한 후, 상단의 <strong className="text-blue-600 font-bold">[조회하기]</strong> 버튼을 클릭하시면 최신 대입 수시 결과를 안전하게 분석하여 표기합니다.
+            </p>
+            <div className="mt-8">
+              <button
+                onClick={handleSearchClick}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 active:from-blue-700 active:to-blue-800 text-white font-black text-sm px-8 py-3.5 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all cursor-pointer"
+              >
+                <Search className="h-4 w-4" />
+                지금 실시간 데이터 조회하기
+              </button>
+            </div>
+          </div>
         ) : (
-          <>
+          <div className="space-y-6 animate-fadeIn">
             {isUsingFallback && (
               <div className="mb-6 bg-amber-50/70 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
                 <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
@@ -612,146 +795,6 @@ function getSushiData() {
                 </div>
               </div>
             )}
-
-            <div className="space-y-6">
-            
-            {/* Top Row: Responsive Filters Grid */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="h-4 w-4 text-blue-900" />
-                  <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">수시 상세 필터링 조건</h4>
-                </div>
-                <button
-                  onClick={handleResetFilters}
-                  className="text-xs text-slate-500 hover:text-blue-600 transition flex items-center gap-1 font-bold"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  필터 초기화
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {/* 0. Year Selector */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">학년도 선택</label>
-                  <select
-                    value={filterYear}
-                    onChange={(e) => { setFilterYear(e.target.value); setCurrentPage(1); }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
-                  >
-                    <option value="">전체 학년도 ({years.length}개 학년도)</option>
-                    {years.map(y => (
-                      <option key={y} value={y}>{y}학년도</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 1. Region Selector */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">지역 선택</label>
-                  <select
-                    value={filterRegion}
-                    onChange={(e) => { setFilterRegion(e.target.value); setCurrentPage(1); }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
-                  >
-                    <option value="">전체 지역 ({regions.length}개 지역)</option>
-                    {regions.map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 1.5 Admission Type Selector */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">전형유형 선택</label>
-                  <select
-                    value={filterAdmissionType}
-                    onChange={(e) => { setFilterAdmissionType(e.target.value); setCurrentPage(1); }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
-                  >
-                    <option value="">전체 전형 ({admissionTypes.length}개 전형)</option>
-                    {admissionTypes.map(at => (
-                      <option key={at} value={at}>{at}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 2. University Selector with suggestion search */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">대학명 입력</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      list="uni-datalist"
-                      value={filterUniversity}
-                      onChange={(e) => { setFilterUniversity(e.target.value); setCurrentPage(1); }}
-                      placeholder="대학명 검색 (예: 서울대학교)"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
-                    />
-                    <datalist id="uni-datalist">
-                      {universities.map(u => (
-                        <option key={u} value={u} />
-                      ))}
-                    </datalist>
-                    <Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* 3. Department Search */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">학과명 키워드</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={filterDepartment}
-                      onChange={(e) => { setFilterDepartment(e.target.value); setCurrentPage(1); }}
-                      placeholder="학과 키워드 입력 (예: 의예)"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden text-slate-800 font-medium"
-                    />
-                    <Building className="absolute right-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* 4. Converted Grade Slider */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">내신 등급 범위</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      step="0.05"
-                      min="1.0"
-                      max="9.0"
-                      value={minGrade}
-                      onChange={(e) => {
-                        const val = Math.max(1, Math.min(9, parseFloat(e.target.value) || 1));
-                        setMinGrade(val);
-                        setCurrentPage(1);
-                      }}
-                      className="w-16 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-center font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-                    />
-                    <div className="h-[2px] flex-1 bg-slate-200 relative">
-                      <div className="absolute h-full bg-blue-600" style={{ left: `${((minGrade - 1) / 8) * 100}%`, right: `${100 - ((maxGrade - 1) / 8) * 100}%` }}></div>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.05"
-                      min="1.0"
-                      max="9.0"
-                      value={maxGrade}
-                      onChange={(e) => {
-                        const val = Math.max(1, Math.min(9, parseFloat(e.target.value) || 9));
-                        setMaxGrade(val);
-                        setCurrentPage(1);
-                      }}
-                      className="w-16 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-center font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Statistics Row Card Layout */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -957,7 +1000,6 @@ function getSushiData() {
               </div>
             </section>
           </div>
-          </>
         )}
       </main>
 
