@@ -88,7 +88,7 @@ export default function App() {
 
   const handleLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (passwordInput === '2267') {
+    if (passwordInput === '0811') {
       setIsAuthenticated(true);
       sessionStorage.setItem('sushi_is_authenticated', 'true');
       setPasswordError(null);
@@ -115,7 +115,7 @@ export default function App() {
       if (passwordInput.length < 4) {
         const nextVal = passwordInput + val;
         setPasswordInput(nextVal);
-        if (nextVal === '2267') {
+        if (nextVal === '0811') {
           setIsAuthenticated(true);
           sessionStorage.setItem('sushi_is_authenticated', 'true');
           setPasswordError(null);
@@ -538,7 +538,7 @@ function getSushiData() {
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
                     setPasswordInput(val);
-                    if (val === '2267') {
+                    if (val === '0811') {
                       setIsAuthenticated(true);
                       sessionStorage.setItem('sushi_is_authenticated', 'true');
                       setPasswordError(null);
